@@ -9,11 +9,11 @@ function App() {
     <div style={{ display: "flex", gap: "20px", justifyContent: "center" }}>
       <PokemonPanel
         position="left"
-        onAttack={(damage) => setDamageToRight(damage)}
+        onAttack={(damage) => setDamageToRight((prev) => prev + damage)} // Applique les dégâts au Pokémon de droite
       />
       <PokemonPanel
         position="right"
-        onAttack={(damage) => setDamageToLeft(damage)}
+        onAttack={(damage) => setDamageToLeft((prev) => prev + damage)} // Applique les dégâts au Pokémon de gauche
       />
     </div>
   );

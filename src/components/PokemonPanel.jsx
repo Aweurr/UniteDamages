@@ -11,18 +11,30 @@ function PokemonPanel({ position, onAttack }) {
   const [level, setLevel] = useState(1); // Niveau initial
   const [hp, setHp] = useState(selectedPokemon.stats[0].HP); // HP initial
   const [shield, setShield] = useState(0); // Valeur de shield
+const [previewHp, setPreviewHp] = useState(hp); // Gère les HP "simulés"
 
   const isMirrored = position === "right";
 
-  const handleLevelChange = (newLevel) => {
-    setLevel(newLevel);
-    setHp(selectedPokemon.stats[newLevel - 1].HP); // Mettre à jour les HP au changement de niveau
+  // Fonction pour recevoir des dégâts
+  const receiveDamage = (damage) => {
+    const effectiveDamage = damage - shield > 0 ? damage - shield : 0;
+    setShield((prevShield) => Math.max(prevShield - damage, 0)); // Réduit le bouclier
+    setHp((prevHp) => Math.max(prevHp - effectiveDamage, 0)); // Réduit les PV
   };
 
-  const handleReceiveDamage = (damage) => {
-    const effectiveDamage = damage - shield > 0 ? damage - shield : 0;
-    setShield((prevShield) => Math.max(prevShield - damage, 0));
-    setHp((prevHp) => Math.max(prevHp - effectiveDamage, 0));
+  // Changer le niveau
+  const handleLevelChange = (newLevel) => {
+    setLevel(newLevel);
+    setHp(selectedPokemon.stats[newLevel - 1].HP); // Met à jour les HP selon le niveau
+  };
+
+  // Réinitialise lors du changement de Pokémon
+  const handlePokemonChange = (pokemon) => {
+    setSelectedPokemon(pokemon);
+    setLevel(1); // Réinitialise le niveau
+    setHp(pokemon.stats[0].HP); // Réinitialise les PV
+    setShield(0); // Réinitialise le shield
+    setShowPokemonList(false);
   };
 
   return (
@@ -88,65 +100,53 @@ function PokemonPanel({ position, onAttack }) {
       </div>
 
       {/* Barre de vie */}
-      <div style={{ marginBottom: "20px", position: "relative", height: "30px" }}>
+<div style={{ marginBottom: "20px", position: "relative", height: "30px" }}>
+  <div
+    style={{
+      position: "absolute",
+      top: 0,
+      left: 0,
+      width: "100%",
+      height: "100%",
+      backgroundColor: "#e0e0e0",
+      borderRadius: "5px",
+      overflow: "hidden",
+    }}
+  >
+    {/* Marques tous les 500 HP */}
+    {Array.from(
+      { length: Math.floor(selectedPokemon.stats[level - 1].HP / 500) },
+      (_, i) => (
         <div
+          key={i}
           style={{
             position: "absolute",
+            left: `${(i + 1) * 500 / selectedPokemon.stats[level - 1].HP * 100}%`,
             top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            backgroundColor: "#e0e0e0",
-            borderRadius: "5px",
-            overflow: "hidden",
+            bottom: 0,
+            width: "2px",
+            backgroundColor: "#aaa",
           }}
-        >
-          {/* Marques tous les 500 HP */}
-          {Array.from(
-            { length: Math.floor(selectedPokemon.stats[level - 1].HP / 500) },
-            (_, i) => (
-              <div
-                key={i}
-                style={{
-                  position: "absolute",
-                  left: `${(i + 1) * 500 / selectedPokemon.stats[level - 1].HP * 100}%`,
-                  top: 0,
-                  bottom: 0,
-                  width: "2px",
-                  backgroundColor: "#aaa",
-                }}
-              />
-            )
-          )}
-          {/* HP Bar */}
-          <div
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: `${(hp / selectedPokemon.stats[level - 1].HP) * 100}%`,
-              height: "100%",
-              backgroundColor: "#76c7c0",
-            }}
-          />
-          {/* Shield Bar */}
-          {shield > 0 && (
-            <div
-              style={{
-                position: "absolute",
-                top: 0,
-                left: `${(hp / selectedPokemon.stats[level - 1].HP) * 100}%`,
-                width: `${(shield / selectedPokemon.stats[level - 1].HP) * 100}%`,
-                height: "100%",
-                backgroundColor: "#ffa726",
-              }}
-            />
-          )}
-        </div>
-        <span style={{ position: "absolute", right: "10px", top: "5px" }}>
-          {hp} / {selectedPokemon.stats[level - 1].HP}
-        </span>
-      </div>
+        />
+      )
+    )}
+    {/* HP Bar */}
+    <div
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: `${(previewHp / selectedPokemon.stats[level - 1].HP) * 100}%`,
+        height: "100%",
+        backgroundColor: "#76c7c0",
+      }}
+    />
+  </div>
+  <span style={{ position: "absolute", right: "10px", top: "5px" }}>
+    {previewHp} / {selectedPokemon.stats[level - 1].HP}
+  </span>
+</div>
+
 
       {/* Body */}
       <div
@@ -159,25 +159,21 @@ function PokemonPanel({ position, onAttack }) {
         <ItemSlots />
         <StatsTable stats={selectedPokemon.stats[level - 1]} />
         <AttackList
-          attacks={selectedPokemon.skills}
-          onAttack={(attack) => {
-            const damage = Math.round(attack.damage * (1 + level / 10)); // Formule bidon de dégâts
-            onAttack(damage);
-          }}
-        />
+  attacks={selectedPokemon.skills}
+  onAttack={(attack) => {
+    const damage = Math.round(attack.damage * (1 + level / 10)); // Calcul des dégâts
+    setPreviewHp((prevHp) => Math.max(prevHp - damage, 0)); // Simule les dégâts
+  }}
+  onDeselect={() => setPreviewHp(hp)} // Réinitialise quand l'attaque est désélectionnée
+/>
+
       </div>
 
       {/* Footer */}
       {showPokemonList && (
         <PokemonSelector
           pokemons={pokemons}
-          onSelect={(pokemon) => {
-            setSelectedPokemon(pokemon);
-            setLevel(1); // Réinitialiser le niveau lors du changement de Pokémon
-            setHp(pokemon.stats[0].HP); // Réinitialiser les HP
-            setShield(0); // Réinitialiser le shield
-            setShowPokemonList(false);
-          }}
+          onSelect={handlePokemonChange}
         />
       )}
     </div>

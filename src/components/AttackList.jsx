@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 
-function AttackList({ attacks, onAttack }) {
+function AttackList({ attacks, onAttack, onDeselect }) {
+  const [selectedAttack, setSelectedAttack] = useState(null);
+
   return (
     <div style={{ flex: "1", border: "1px solid #ddd", padding: "10px", borderRadius: "8px" }}>
       <h3>Attaques</h3>
@@ -17,8 +19,17 @@ function AttackList({ attacks, onAttack }) {
               borderRadius: "5px",
               position: "relative",
               cursor: "pointer",
+              backgroundColor: selectedAttack === attack ? "#f0f0f0" : "transparent",
             }}
-            onClick={() => onAttack(attack)}
+            onClick={() => {
+              if (selectedAttack === attack) {
+                setSelectedAttack(null);
+                onDeselect(); // Désélectionne l'attaque
+              } else {
+                setSelectedAttack(attack);
+                onAttack(attack); // Applique temporairement l'attaque
+              }
+            }}
           >
             <img
               src={new URL(`../assets/attacks/${attack.icon}`, import.meta.url).href}
@@ -33,4 +44,5 @@ function AttackList({ attacks, onAttack }) {
   );
 }
 
+// Ceci est l'export par défaut
 export default AttackList;
