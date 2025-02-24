@@ -159,13 +159,33 @@ const [previewHp, setPreviewHp] = useState(hp); // Gère les HP "simulés"
         <ItemSlots />
         <StatsTable stats={selectedPokemon.stats[level - 1]} />
         <AttackList
-  attacks={selectedPokemon.skills}
-  onAttack={(attack) => {
-    const damage = Math.round(attack.damage * (1 + level / 10)); // Calcul des dégâts
-    setPreviewHp((prevHp) => Math.max(prevHp - damage, 0)); // Simule les dégâts
-  }}
-  onDeselect={() => setPreviewHp(hp)} // Réinitialise quand l'attaque est désélectionnée
-/>
+          attacks={selectedPokemon.skills}
+          onAttack={(attack) => {
+            const stats = selectedPokemon.stats[level - 1]; // Stats du Pokémon au niveau choisi
+            let damage = attack.damage; // Valeur par défaut
+          
+            if (attack.formules && attack.formules.length > 0) {
+              // Prend la première formule (ou boucle sur plusieurs si besoin)
+              const formula = attack.formules[0].formule; 
+          
+              // Remplace les variables par leurs vraies valeurs
+              const formulaWithValues = formula
+                .replace(/SpA/g, stats.SpA)
+                .replace(/Level/g, level);
+          
+              try {
+                // Calcul des dégâts
+                damage = Math.floor(eval(formulaWithValues)); // ⚠ Attention à `eval()`
+              } catch (error) {
+                console.error("Erreur dans le calcul de la formule:", error);
+              }
+            }
+          
+            // Applique les dégâts calculés
+            setPreviewHp((prevHp) => Math.max(prevHp - damage, 0)); 
+          }}
+          onDeselect={() => setPreviewHp(hp)} // Réinitialise quand l'attaque est désélectionnée
+        />
 
       </div>
 

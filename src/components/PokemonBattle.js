@@ -1,19 +1,10 @@
 import React, { useState } from "react";
-import pokemons from "./pokemons"; // Vos données Pokémon
+import pokemons from "./pokemons";
+import { applyDamage } from "./BattleManager"; // Import de la nouvelle fonction
 
 const PokemonBattle = () => {
-  // State pour les PV des deux Pokémon
-  const [pokemon1HP, setPokemon1HP] = useState(pokemons[0].stats[0].HP); // HP initial de Venusaur
-  const [pokemon2HP, setPokemon2HP] = useState(pokemons[1].stats[0].HP); // HP initial de Charizard
-
-  // Fonction pour appliquer les dégâts
-  const applyDamage = (attackerId, damage) => {
-    if (attackerId === pokemons[0].id) {
-      setPokemon2HP((prevHP) => Math.max(prevHP - damage, 0)); // Réduit les HP de Charizard
-    } else if (attackerId === pokemons[1].id) {
-      setPokemon1HP((prevHP) => Math.max(prevHP - damage, 0)); // Réduit les HP de Venusaur
-    }
-  };
+  const [pokemon1HP, setPokemon1HP] = useState(pokemons[0].stats[0].HP);
+  const [pokemon2HP, setPokemon2HP] = useState(pokemons[1].stats[0].HP);
 
   return (
     <div>
@@ -26,7 +17,9 @@ const PokemonBattle = () => {
           {pokemons[0].skills.map((skill, index) => (
             <button
               key={index}
-              onClick={() => applyDamage(pokemons[0].id, skill.damage)} // Lors du clic, applique les dégâts
+              onClick={() =>
+                applyDamage(pokemons[0], pokemons[1], skill, setPokemon2HP)
+              }
               className="attack-button"
             >
               <img src={skill.icon} alt={skill.name} />
@@ -45,7 +38,9 @@ const PokemonBattle = () => {
           {pokemons[1].skills.map((skill, index) => (
             <button
               key={index}
-              onClick={() => applyDamage(pokemons[1].id, skill.damage)} // Lors du clic, applique les dégâts
+              onClick={() =>
+                applyDamage(pokemons[1], pokemons[0], skill, setPokemon1HP)
+              }
               className="attack-button"
             >
               <img src={skill.icon} alt={skill.name} />
